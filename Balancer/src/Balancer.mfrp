@@ -1,0 +1,55 @@
+# Balancing Demo for Pololu Balboa 32U4 Robot
+# (adapted from Balancer demo for Balboa 32U4)
+# Copyright (c) 2017 Takuo Watanabe
+
+module Balancer
+in  gyroY  : Int,  # gyroscope (y-axis)
+    accX   : Int,  # accelerometer (x-axis)
+    encL   : Int,  # left motor encoder
+    encR   : Int   # right motor encoder
+out motorL : Int,  # left motor
+    motorR : Int,  # right motor
+    ledR   : Bool, # Red LED
+    ledG   : Bool, # Green LED
+    ledY   : Bool  # Yellow LED
+use StdL
+
+# parameters
+data gear_ratio       = 111
+data max_speed        = 300
+data angle_rate_ratio = 140
+data angle_resp       = 11
+data dist_resp        = 73
+data dist_diff_resp   = -50
+data speed_resp       = 3300
+data update_time_ms   = 10
+
+# constrain the speed of motors
+func limSpeed(s) = if s < -max_speed then -max_speed
+                   else if s > max_speed then max_speed
+                   else s
+
+node init[0] angle = (angle@last + gyroY * update_time_ms) * 99 / 100
+
+node init[(0, 0)] (encL1, encR1) = (encL, encR)
+node (speedL, speedR) = (encL1 - encL1@last, encR1 - encR1@last)
+node init[(0, 0)] (distL, distR) = (distL@last + speedL, distR@last + speedR)
+
+node risingAngleOff  = gyroY * angle_rate_ratio + angle
+node fallingAngleOff = gyroY * angle_rate_ratio - angle
+
+node init[0] motor =
+    limSpeed(motor@last +
+             (angle_resp * risingAngleOff +
+              dist_resp * (distL + distR ) +
+              speed_resp * (speedL + speedR)) / 100 / gear_ratio)
+
+node (motorL, motorR) =
+    if accX > 0 then (motor + (distL - distR) * dist_diff_resp / 100,
+                      motor - (distL - distR) * dist_diff_resp / 100)
+                else (0, 0)
+
+node ledR = accX < 0
+node ledG = fallingAngleOff < 0
+node ledY = fallingAngleOff > 0
+

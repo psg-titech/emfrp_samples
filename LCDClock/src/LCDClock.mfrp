@@ -1,0 +1,93 @@
+module LCDClock
+in
+  btnMode(False) : Bool,   # Is mode-button pushed now?
+  btnNext(False) : Bool,   # Is next-button pushed now?
+  btnRotate(False) : Bool, # Is rotate-button pushed now?
+  pulse100ms : Bool        # input to be True only once per 100ms
+out
+  hour, min, sec,            # current time to display
+  maskHour, maskMin, maskSec # Is it now needed to display -- instead of two-digits?
+use
+  Std
+
+# Functions
+# --------------------
+
+type Mode = Normal | Edit
+type EditPos = HourPos | MinPos | SecPos
+type Time = Time(Int, Int, Int)
+
+func nextMode(m) = m of Normal -> Edit, Edit -> Normal
+
+func editable(m) = m of Normal -> False, Edit -> True
+
+func nextPos(p) = p of:
+  HourPos -> MinPos
+  MinPos -> SecPos
+  SecPos -> HourPos
+
+func positiveEdge(a, b) = !a && b
+
+# proceed Time by 1sec
+func proceedTime(t) = {
+  Time(h, m, s) = t
+  newS = s + 1
+  newM = m + (newS / 60)
+  newH = h + (newM / 60)
+  Time(newH % 24, newM % 60, newS % 60)
+}
+
+func roundingTime(t, dh, dm, ds) = {
+  Time(h, m, s) = t
+  Time((h + dh) % 24, (m + dm) % 60, (s + ds) % 60)
+}
+
+# Nodes
+# --------------------
+
+# mod-10 counter incremented by every 100ms
+node init[0] counter : Int =
+  (if pulse100ms then counter@last + 1 else counter@last) % 10
+
+# time-varying value to be True only once per 1sec
+node pulse1s : Bool =
+  counter == 0 && counter@last != 0
+
+# time-varying value switching True/False by every 500ms
+node flash : Bool =
+  counter < 5
+
+# time-varying value representing current time-set mode
+node init[Normal] curMode : Mode =
+  if btnMode@last `positiveEdge` btnMode then curMode@last.nextMode else curMode@last
+
+# time-varying value representing current editing-cursor-position
+node init[HourPos] curPos : EditPos =
+  if btnNext@last `positiveEdge` btnNext then curPos@last.nextPos else curPos@last
+
+# time-varying value representing diffs to add to current time.
+node (dh, dm, ds) : (Int, Int, Int) =
+  if curMode.editable && (btnRotate@last `positiveEdge` btnRotate) then
+    curPos of:
+      HourPos -> (1, 0, 0)
+      MinPos -> (0, 1, 0)
+      SecPos -> (0, 0, 1)
+  else
+    (0, 0, 0)
+
+# time-varying value representing current time
+node init[Time(0, 0, 0)] Time(hour, min, sec) as curTime =
+  if pulse1s then
+    curTime@last.proceedTime.roundingTime(dh, dm, ds)
+  else
+    curTime@last.roundingTime(dh, dm, ds)
+
+# time-varying value representing need of masking
+node (maskHour, maskMin, maskSec) =
+  if curMode.editable && flash then
+    curPos of:
+      HourPos -> (True, False, False)
+      MinPos -> (False, True, False)
+      SecPos -> (False, False, True)
+  else
+    (False, False, False)

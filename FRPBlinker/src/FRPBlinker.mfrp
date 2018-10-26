@@ -1,0 +1,6 @@
+module FRPBlinker
+in  msec : Int
+out led : Bool
+use Std
+
+node led = msec % 1000 < 500

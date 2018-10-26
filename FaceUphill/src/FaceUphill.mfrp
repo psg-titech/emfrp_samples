@@ -1,0 +1,27 @@
+# Controlls Zumo32U4 to face uphill
+# (adapted from FaceUphill demo for Zumo32U4)
+# Copyright (c) 2017 Takuo Watanabe
+
+module FaceUphill
+in  accX   : Int, # accelerometer (x-axis)
+    accY   : Int, # accelerometer (y-axis)
+    encL   : Int, # left motor encoder
+    encR   : Int  # right motor encoder
+out motorL : Int, # left motor
+    motorR : Int  # right motor
+use Std
+
+# This function is used to constrain the speed of 
+# the motors to be between -maxSpeed and maxSpeed
+data maxSpeed = 150
+func motorSpeed(s) = if s < -maxSpeed then -maxSpeed
+                     else if s > maxSpeed then maxSpeed
+                     else s
+
+node magSq = accX * accX + accY * accY
+node turn = if magSq > 1427 * 1427 then accY / 16 else 0
+
+node forward = -(encL + encR)
+
+node motorL = motorSpeed(forward - turn)
+node motorR = motorSpeed(forward + turn)
