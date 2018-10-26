@@ -1,5 +1,5 @@
 # FaceUphill
-Controlls Zumo32U4 to face uphill  
+Controls Zumo32U4 to face uphill  
 (adapted from FaceUphill demo for Zumo32U4)
 
 ## To build & run
