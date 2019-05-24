@@ -1,15 +1,19 @@
 PROGNAME = FanController
 GENSRCS = $(PROGNAME).cpp $(PROGNAME).h
+EMFRPOPTS = --cpp --nomain
 
-$(PROGNAME).cpp: $(PROGNAME).mfrp
-	emfrp $<
-	mv $(PROGNAME).c $(PROGNAME).cpp
-	$(RM) $(PROGNAME)Main.c.gen
+.PNONY: clean allclean
+
+$(GENSRCS): $(PROGNAME).mfrp
+	emfrp $(EMFRPOPTS) $<
 
 clean:
 	$(RM) $(GENSRCS)
+	$(RM) $(PROGNAME).c
 	$(RM) $(PROGNAME)Main.*
 
 allclean: clean
-	$(RM) *~ a.out *.o
+	$(RM) *.o
+	$(RM) *~
 	$(RM) .DS_Store
+	

@@ -1,13 +1,13 @@
 PROGNAME = SimFanController
 GENSRCS = $(PROGNAME).c $(PROGNAME).h
+EMFRPOPTS = --nomain
 OBJS = main.o $(PROGNAME).o
 EXES = $(PROGNAME)
 
 .PHONY: exe clean allclean
 
 $(PROGNAME).c $(PROGNAME).h: $(PROGNAME).mfrp
-	emfrp $<
-	$(RM) $(PROGNAME)Main.c.gen
+	emfrp $(EMFRPOPTS) $<
 
 exe: $(EXES)
 
@@ -21,7 +21,6 @@ clean:
 	$(RM) $(EXES)
 
 allclean: clean
-	$(RM) a.out
 	$(RM) *.o
 	$(RM) *~
 	$(RM) .DS_Store
