@@ -1,10 +1,8 @@
 module FanController  # module name
 in  tmp : Double,     # temperature sensor
-    hmd : Double,     # humidity sensor
-    clock : Int       # clock (second)
-out di  : Double,     # discomfort index
-    fan : Bool,       # fan switch
-    ctime : Int       # cumulative operating time
+    hmd : Double      # humidity sensor
+out fan : Bool,       # fan switch
+    di  : Double      # discomfort index
 use Std
 
 # discomfort (temperature-humidity) index
@@ -14,11 +12,4 @@ node di = 0.81 *. tmp +. 0.01 *. hmd *. (0.99 *. tmp -. 14.3) +. 46.3
 node init[False] fan = di >=. th
 
 # hysteresis offset
-node th = 73.0 +. (if fan@last then -.0.5 else 0.5)
-
-node init[0] ctime = 
-    if fan@last then clock - ctime0@last else ctime@last
-
-node init[0] ctime0 =
-    if !fan@last && fan
-    then clock - ctime@last else ctime0@last
+node th = 75.0 +. (if fan@last then -.0.5 else 0.5)

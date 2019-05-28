@@ -11,7 +11,7 @@ const int dat_x = lbl_x + 20;
 const int tmp_y = 30;
 const int hmd_y = tmp_y + 50;
 const int di_y = hmd_y + 50;
-const int ctime_y = di_y + 60;
+const int fan_y = di_y + 50;
 const int dat_w = 320 - dat_x;
 const int dat_h = 50;
 const int dat2_h = 40;
@@ -21,17 +21,16 @@ const int dat2_h = 40;
 #define FF19 &FreeSans18pt7b
 #define FF24 &FreeSansBold24pt7b
 
-#define LFONT1 FF24
-#define DFONT1 FF24
-#define LFONT2 FF19
-#define DFONT2 FF19
+#define LFONT FF24
+#define DFONT FF24
 
 void setup() {
     M5.begin();
     Wire.begin();
-    pinMode(fan_pin, OUTPUT);
-
-    M5.Lcd.setFreeFont(LFONT1);
+    pinMode(21, OUTPUT);
+    digitalWrite(21, LOW);
+    
+    M5.Lcd.setFreeFont(LFONT);
     M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
     M5.Lcd.setTextDatum(TR_DATUM);
     M5.Lcd.drawString("temp:", lbl_x, tmp_y, GFXFF);
@@ -39,9 +38,8 @@ void setup() {
     M5.Lcd.drawString("humid:", lbl_x, hmd_y, GFXFF);
     M5.Lcd.setTextDatum(TR_DATUM);
     M5.Lcd.drawString("di:", lbl_x, di_y, GFXFF);
-    M5.Lcd.setFreeFont(LFONT2);
     M5.Lcd.setTextDatum(TR_DATUM);
-    M5.Lcd.drawString("ctime:", lbl_x, ctime_y, GFXFF);
+    M5.Lcd.drawString("fan:", lbl_x, fan_y, GFXFF);
 
     lastWakeTime = xTaskGetTickCount();
     ActivateFanController();
@@ -49,7 +47,7 @@ void setup() {
 
 void loop() {}
 
-void Input(double *tmp, double *hmd, int *clock) {
+void Input(double *tmp, double *hmd) {
     vTaskDelayUntil(&lastWakeTime, 500 / portTICK_PERIOD_MS);
 
     dht12.update();
@@ -59,9 +57,8 @@ void Input(double *tmp, double *hmd, int *clock) {
     float hmdf = dht12.humidity();
     *tmp = (double)tmpf;
     *hmd = (double)hmdf;
-    *clock = millis() / 1000;
 
-    M5.Lcd.setFreeFont(DFONT1);
+    M5.Lcd.setFreeFont(DFONT);
     M5.Lcd.setTextColor(TFT_YELLOW, TFT_BLACK);
     if (tmpf != otmpf) {
         otmpf = tmpf;
@@ -77,11 +74,12 @@ void Input(double *tmp, double *hmd, int *clock) {
     }
 }
 
-void Output(double *di, int *fan, int *ctime) {
-    float dif = (float)*di;
+void Output(int *fan, double *di) {
     static float odif = -1000;
-    static int octime = -1;
-    M5.Lcd.setFreeFont(DFONT1);
+    static int ofan = -1;
+    float dif = (float)*di;
+
+    M5.Lcd.setFreeFont(DFONT);
     M5.Lcd.setTextColor(TFT_CYAN, TFT_BLACK);
     if (odif != dif) {
         odif = dif;
@@ -89,13 +87,12 @@ void Output(double *di, int *fan, int *ctime) {
         M5.Lcd.setTextDatum(TL_DATUM);
         M5.Lcd.drawFloat(dif, 1, dat_x, di_y, GFXFF);
     }
-    M5.Lcd.setFreeFont(DFONT2);
     M5.Lcd.setTextColor(TFT_PINK, TFT_BLACK);
-    if (octime != *ctime) {
-        octime = *ctime;
-        M5.Lcd.fillRect(dat_x, ctime_y, dat_w, dat2_h, TFT_BLACK);
+    if (ofan != *fan) {
+        ofan = *fan;
+        M5.Lcd.fillRect(dat_x, fan_y, dat_w, dat2_h, TFT_BLACK);
         M5.Lcd.setTextDatum(TL_DATUM);
-        M5.Lcd.drawNumber(*ctime, dat_x, ctime_y, GFXFF);
+        M5.Lcd.drawString(*fan ? "ON" : "OFF", dat_x, fan_y, GFXFF);
     }
-    digitalWrite(fan_pin, *fan);
+    digitalWrite(21, LOW);
 }
