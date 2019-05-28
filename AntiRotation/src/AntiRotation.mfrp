@@ -4,7 +4,7 @@
 
 module AntiRotation
 in  gyroZ : Int,    # gyroscope (z-axis)
-    t     : Int     # current time (usec)
+    t(0)  : Int     # current time (usec)
 out motorL : Int,   # left motor
     motorR : Int    # right motor
 use Std
@@ -21,8 +21,7 @@ data kp = 11930465 / 1000
 data kd = 8
 
 # time difference
-node init[0] u = t
-node dt = u - u@last
+node dt = t - t@last
 
 # Calculates the angle to turn from the gyroscope
 # data and dt
