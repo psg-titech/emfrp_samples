@@ -1,0 +1,13 @@
+module DoubleClick
+in  button(False) : Bool,
+    millis : Int
+out led : Bool
+use Std
+
+node init[(1000, 0)] (t1, t0) = 
+    if !button@last && button
+    then (millis, t1@last) else (t1@last, t0@last)
+
+node init[False] led =
+    if !(t1@last - t0@last < 500) && (t1 - t0 < 500)
+    then !led@last else led@last
