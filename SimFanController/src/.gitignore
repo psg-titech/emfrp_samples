@@ -4,3 +4,5 @@ SimFanController.cpp
 SimFanControllerMain.c
 SimFanControllerMain.c.gen
 
+SimFanController
+*.o
