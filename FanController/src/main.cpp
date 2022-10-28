@@ -27,8 +27,8 @@ const int dat2_h = 40;
 void setup() {
     M5.begin();
     Wire.begin();
-    pinMode(21, OUTPUT);
-    digitalWrite(21, LOW);
+    pinMode(fan_pin, OUTPUT);
+    digitalWrite(fan_pin, LOW);
     
     M5.Lcd.setFreeFont(LFONT);
     M5.Lcd.setTextColor(TFT_WHITE, TFT_BLACK);
@@ -94,5 +94,5 @@ void Output(int *fan, double *di) {
         M5.Lcd.setTextDatum(TL_DATUM);
         M5.Lcd.drawString(*fan ? "ON" : "OFF", dat_x, fan_y, GFXFF);
     }
-    digitalWrite(21, LOW);
+    digitalWrite(fan_pin, *fan);
 }
